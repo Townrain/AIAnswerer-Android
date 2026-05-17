@@ -75,6 +75,15 @@ jobs:
         files: |
           app/build/outputs/apk/debug/*.apk
         name: Release ${{ steps.get_version.outputs.VERSION }}
-        generate_release_notes: true
+        body: |
+          ## AIAnswerer ${{ steps.get_version.outputs.VERSION }}
+          
+          ### 下载
+          - debug-apk: Debug 版本 APK
+          
+          ### 功能
+          - 并行答题模式
+          - 并发数可配置（1-10）
+          - LLM/VLM/联网搜索测试
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
