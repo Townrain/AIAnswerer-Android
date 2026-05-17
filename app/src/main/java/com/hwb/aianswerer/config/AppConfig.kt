@@ -24,7 +24,6 @@ object AppConfig {
     private const val KEY_AUTO_SUBMIT = "auto_submit"
     private const val KEY_AUTO_COPY = "auto_copy"
     private const val KEY_QUESTION_TYPES = "question_types"
-    private const val KEY_QUESTION_SCOPE = "question_scope"
     private const val KEY_IS_FIRST_LAUNCH = "is_first_launch"
     private const val KEY_CROP_MODE = "crop_mode"
     private const val KEY_SHOW_ANSWER_CARD_QUESTION = "show_answer_card_question"
@@ -42,6 +41,7 @@ object AppConfig {
     private const val KEY_VISION_TEMPERATURE = "vision_temperature"
     private const val KEY_VISION_MAX_TOKENS = "vision_max_tokens"
     private const val KEY_VISION_JSON_MODE = "vision_json_mode"
+    private const val KEY_DARK_MODE = "dark_mode"
 
     // 语言代码常量
     const val LANGUAGE_ZH = "zh"
@@ -220,6 +220,24 @@ object AppConfig {
         return mmkv.decodeBool(KEY_AUTO_COPY, false)
     }
 
+    // ========== 暗色模式相关 ==========
+
+    /**
+     * 保存暗色模式设置
+     * @param mode 暗色模式：0=跟随系统, 1=亮色, 2=暗色
+     */
+    fun saveDarkMode(mode: Int) {
+        mmkv.encode(KEY_DARK_MODE, mode)
+    }
+
+    /**
+     * 获取暗色模式设置
+     * @return 暗色模式：0=跟随系统, 1=亮色, 2=暗色，默认为0
+     */
+    fun getDarkMode(): Int {
+        return mmkv.decodeInt(KEY_DARK_MODE, 0)
+    }
+
     // ========== 答题设置相关 ==========
 
     /**
@@ -242,22 +260,6 @@ object AppConfig {
         } else {
             typesString.split(",").map { it.trim() }.filter { it.isNotEmpty() }.toSet()
         }
-    }
-
-    /**
-     * 保存题目内容范围
-     * @param scope 题目内容范围描述
-     */
-    fun saveQuestionScope(scope: String) {
-        mmkv.encode(KEY_QUESTION_SCOPE, scope)
-    }
-
-    /**
-     * 获取题目内容范围
-     * @return 题目内容范围，默认为空字符串（不限制）
-     */
-    fun getQuestionScope(): String {
-        return mmkv.decodeString(KEY_QUESTION_SCOPE, "") ?: ""
     }
 
     // ========== 答题卡片显示控制相关 ==========
@@ -519,9 +521,9 @@ object AppConfig {
         mmkv.encode(KEY_FLOAT_BUTTON_ALPHA, alpha.coerceIn(0.1f, 1.0f))
     }
 
-    /** 卡片透明度 0.1~1.0，默认 1.0 */
+    /** 卡片透明度 0.1~1.0，默认 0.85 */
     fun getFloatCardAlpha(): Float {
-        return mmkv.decodeFloat(KEY_FLOAT_CARD_ALPHA, 1.0f)
+        return mmkv.decodeFloat(KEY_FLOAT_CARD_ALPHA, 0.85f)
     }
 
     fun saveFloatCardAlpha(alpha: Float) {

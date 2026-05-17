@@ -8,7 +8,12 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.platform.LocalContext
+import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
+import androidx.activity.enableEdgeToEdge
+import android.graphics.Color
 
 /**
  * 应用主题定义
@@ -79,24 +84,49 @@ private val DarkColorScheme = darkColorScheme(
  * AI答题助手应用主题
  *
  * @param darkTheme 是否使用暗色主题，默认跟随系统
- * @param dynamicColor 是否使用动态颜色（Android 12+），默认true
+ * @param dynamicColor 是否使用动态颜色（Android 12+），默认false
  * @param content 子组件内容
  */
 @Composable
 fun AIAnswererTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    dynamicColor: Boolean = true,
+    dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
+    // 从全局状态读取，Compose 会自动 recomposition
+    val isDark = when (ThemeState.darkMode) {
+        1 -> false  // 强制亮色
+        2 -> true   // 强制暗色
+        else -> darkTheme  // 跟随系统
+    }
+
+    // 同步更新状态栏样式
+    val context = LocalContext.current
+    DisposableEffect(isDark) {
+        val activity = context as? ComponentActivity
+        activity?.enableEdgeToEdge(
+            statusBarStyle = if (isDark) {
+                SystemBarStyle.dark(Color.TRANSPARENT)
+            } else {
+                SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT)
+            },
+            navigationBarStyle = if (isDark) {
+                SystemBarStyle.dark(Color.TRANSPARENT)
+            } else {
+                SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT)
+            }
+        )
+        onDispose {}
+    }
+
     val colorScheme = when {
         // 动态颜色支持（Android 12+）
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context)
+            if (isDark) dynamicDarkColorScheme(context)
             else dynamicLightColorScheme(context)
         }
         // 暗色主题
-        darkTheme -> DarkColorScheme
+        isDark -> DarkColorScheme
         // 亮色主题
         else -> LightColorScheme
     }

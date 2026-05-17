@@ -6,7 +6,9 @@
     <string name="main_title">AI答题助手</string>
     <string name="status_label">当前状态</string>
     <string name="status_running">答题模式运行中</string>
+    <string name="status_running_desc">悬浮窗已显示</string>
     <string name="status_stopped">答题模式未启动</string>
+    <string name="status_stopped_desc">点击下方按钮启动</string>
     <string name="button_start_mode">进入答题模式</string>
     <string name="button_stop_mode">退出答题模式</string>
 
@@ -45,6 +47,12 @@
     <string name="setting_float_button_alpha">按钮透明度：%d%%</string>
     <string name="setting_float_card_alpha">卡片透明度：%d%%</string>
 
+    <!-- 外观模式设置 -->
+    <string name="setting_theme_title">外观模式</string>
+    <string name="setting_theme_system">跟随系统</string>
+    <string name="setting_theme_light">浅色模式</string>
+    <string name="setting_theme_dark">深色模式</string>
+
     <!-- 本次答题设置 -->
     <string name="session_settings_title">本次答题设置</string>
     <string name="session_settings_desc">根据题型和范围设置，提高答题准确率</string>
@@ -54,8 +62,6 @@
     <string name="question_type_uncertain">不定项</string>
     <string name="question_type_blank">填空题</string>
     <string name="question_type_essay">问答题</string>
-    <string name="question_scope_label">题目内容范围（可选）</string>
-    <string name="question_scope_hint">输入题目关键词或范围，留空则不限制</string>
     <string name="crop_mode_label">截图识别模式</string>
     <string name="crop_mode_full">全屏识别</string>
     <string name="crop_mode_each">部分识别（每次）</string>
@@ -213,7 +219,6 @@
     <string name="system_prompt_type_separator">、</string>
     <string name="system_prompt_limit_header">## 限制条件</string>
     <string name="system_prompt_type_template">仅处理以下题型：%1$s。请尽量将题目解析为这些类型之一，若不符合则输出 questionType="%2$s"。</string>
-    <string name="system_prompt_scope_template">题目范围限定在：%1$s。答案时请优先考虑该范围内的知识点。</string>
     <string name="system_prompt_search_header">## 参考资料\n以下是与题目相关的搜索结果，可作为答题参考（仅参考，不直接复制）：</string>
     <string name="system_prompt_user_message">请分析以下题目：\n\n%1$s</string>
     <string name="system_prompt_base"><![CDATA[你是一个严格的答题结构化助手。读取用户提供的题目文本，抽取题干、题型、选项与答案，并仅返回合法 JSON。不得输出除 JSON 外的任何内容（无解释、无 Markdown、无注释）。

@@ -6,7 +6,9 @@
     <string name="main_title">AI Answerer</string>
     <string name="status_label">Current Status</string>
     <string name="status_running">Answer Mode Running</string>
+    <string name="status_running_desc">Floating window is visible</string>
     <string name="status_stopped">Answer Mode Stopped</string>
+    <string name="status_stopped_desc">Click the button below to start</string>
     <string name="button_start_mode">Start Answer Mode</string>
     <string name="button_stop_mode">Stop Answer Mode</string>
 
@@ -45,6 +47,12 @@
     <string name="setting_float_button_alpha">Button transparency: %d%%</string>
     <string name="setting_float_card_alpha">Card transparency: %d%%</string>
 
+    <!-- Theme Mode -->
+    <string name="setting_theme_title">Appearance</string>
+    <string name="setting_theme_system">Follow System</string>
+    <string name="setting_theme_light">Light Mode</string>
+    <string name="setting_theme_dark">Dark Mode</string>
+
     <!-- Session Settings -->
     <string name="session_settings_title">Session Settings</string>
     <string name="session_settings_desc">Configure question types and scope to improve accuracy</string>
@@ -54,8 +62,6 @@
     <string name="question_type_uncertain">Uncertain</string>
     <string name="question_type_blank">Fill in Blank</string>
     <string name="question_type_essay">Essay</string>
-    <string name="question_scope_label">Question Scope (Optional)</string>
-    <string name="question_scope_hint">Enter keywords or scope, leave blank for no limit</string>
     <string name="crop_mode_label">Screenshot Recognition Mode</string>
     <string name="crop_mode_full">Full Screen</string>
     <string name="crop_mode_each">Partial (Each Time)</string>
@@ -212,7 +218,6 @@
     <string name="system_prompt_type_separator">, </string>
     <string name="system_prompt_limit_header">## Constraints</string>
     <string name="system_prompt_type_template">Only handle the following question types: %1$s. If a question does not match, set questionType="%2$s".</string>
-    <string name="system_prompt_scope_template">Limit the question scope to: %1$s. Prioritize knowledge within this scope when answering.</string>
     <string name="system_prompt_search_header">## Reference Materials\nThe following are search results related to the question, which can be used as answering references (reference only, do not copy directly):</string>
     <string name="system_prompt_user_message">Please analyze the following question:\n\n%1$s</string>
     <string name="system_prompt_base"><![CDATA[You are a rigorous structured answering assistant. Read the question text provided by the user, extract the stem, type, options, and answer, and return valid JSON only. Do not output anything other than JSON (no explanations, no Markdown, no comments).

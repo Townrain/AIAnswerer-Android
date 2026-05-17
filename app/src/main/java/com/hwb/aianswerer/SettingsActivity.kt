@@ -5,6 +5,7 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -16,6 +17,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
@@ -41,6 +43,7 @@ import androidx.compose.ui.unit.dp
 import com.hwb.aianswerer.config.AppConfig
 import com.hwb.aianswerer.ui.components.TopBarWithBack
 import com.hwb.aianswerer.ui.theme.AIAnswererTheme
+import com.hwb.aianswerer.ui.theme.ThemeState
 import com.hwb.aianswerer.utils.LanguageUtil
 
 /**
@@ -62,9 +65,7 @@ class SettingsActivity : BaseActivity() {
                         startActivity(Intent(this, ModelSettingsActivity::class.java))
                     },
                     onLanguageChange = { languageCode ->
-                        // 应用新的语言设置
                         LanguageUtil.applyLanguage(this, languageCode)
-                        // 重启应用以应用语言
                         LanguageUtil.restartApp(this)
                     }
                 )
@@ -98,6 +99,9 @@ fun SettingsScreen(
     var floatButtonAlpha by remember { mutableStateOf(AppConfig.getFloatButtonAlpha()) }
     var floatCardAlpha by remember { mutableStateOf(AppConfig.getFloatCardAlpha()) }
 
+    // 暗色模式设置：0=跟随系统, 1=亮色, 2=暗色
+    var darkMode by remember { mutableStateOf(ThemeState.darkMode) }
+
     // 语言设置状态
     var showRestartDialog by remember { mutableStateOf(false) }
     var selectedLanguage by remember { mutableStateOf<String?>(null) }
@@ -125,10 +129,11 @@ fun SettingsScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable { onModelSettingsClick() },
+                shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer
                 ),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
             ) {
                 Row(
                     modifier = Modifier
@@ -157,7 +162,13 @@ fun SettingsScreen(
 
             // 通用设置卡片
             Card(
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+                border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
             ) {
                 Column(
                     modifier = Modifier
@@ -235,7 +246,13 @@ fun SettingsScreen(
 
             // 答题卡片显示控制卡片
             Card(
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+                border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
             ) {
                 Column(
                     modifier = Modifier
@@ -319,7 +336,13 @@ fun SettingsScreen(
 
             // 悬浮窗外观设置卡片
             Card(
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+                border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
             ) {
                 Column(
                     modifier = Modifier
@@ -396,9 +419,128 @@ fun SettingsScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            // 外观模式设置卡片
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+                border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                ) {
+                    Text(
+                        text = stringResource(R.string.setting_theme_title),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(bottom = 12.dp)
+                    )
+
+                    // 跟随系统
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                if (darkMode != 0) {
+                                    darkMode = 0
+                                    ThemeState.update(0)
+                                }
+                            }
+                            .padding(vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        RadioButton(
+                            selected = darkMode == 0,
+                            onClick = {
+                                if (darkMode != 0) {
+                                    darkMode = 0
+                                    ThemeState.update(0)
+                                }
+                            }
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(
+                            text = stringResource(R.string.setting_theme_system),
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
+
+                    // 浅色模式
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                if (darkMode != 1) {
+                                    darkMode = 1
+                                    ThemeState.update(1)
+                                }
+                            }
+                            .padding(vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        RadioButton(
+                            selected = darkMode == 1,
+                            onClick = {
+                                if (darkMode != 1) {
+                                    darkMode = 1
+                                    ThemeState.update(1)
+                                }
+                            }
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(
+                            text = stringResource(R.string.setting_theme_light),
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
+
+                    // 深色模式
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                if (darkMode != 2) {
+                                    darkMode = 2
+                                    ThemeState.update(2)
+                                }
+                            }
+                            .padding(vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        RadioButton(
+                            selected = darkMode == 2,
+                            onClick = {
+                                if (darkMode != 2) {
+                                    darkMode = 2
+                                    ThemeState.update(2)
+                                }
+                            }
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(
+                            text = stringResource(R.string.setting_theme_dark),
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
             // 语言设置卡片
             Card(
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+                border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
             ) {
                 Column(
                     modifier = Modifier

@@ -56,13 +56,11 @@ class OpenAIClient {
      *
      * @param recognizedText OCR识别的文本
      * @param questionTypes 题型集合（如：单选题、多选题等）
-     * @param questionScope 题目内容范围
      * @return AI解析的答案列表，包装在Result中
      */
     suspend fun analyzeQuestion(
         recognizedText: String,
         questionTypes: Set<String> = emptySet(),
-        questionScope: String = "",
         searchContext: String = ""
     ): Result<List<AIAnswer>> = withContext(Dispatchers.IO) {
         try {
@@ -79,7 +77,7 @@ class OpenAIClient {
             }
 
             // 构建请求，使用动态系统提示词
-            val systemPrompt = Constants.buildSystemPrompt(questionTypes, questionScope, searchContext)
+            val systemPrompt = Constants.buildSystemPrompt(questionTypes, searchContext)
             val messages = listOf(
                 ChatMessage(role = "system", content = systemPrompt),
                 ChatMessage(

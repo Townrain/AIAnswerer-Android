@@ -84,7 +84,6 @@ class FloatingWindowService : Service(), LifecycleOwner, ViewModelStoreOwner,
     private var showAnswer = mutableStateOf(false)
     private var statusMessage = mutableStateOf<String?>(null)
     private var questionTypes = mutableSetOf<String>()
-    private var questionScope = ""
     private var cropMode = AppConfig.CROP_MODE_FULL
     // savedCropRect: 单次模式(once)首次裁剪后缓存，后续截图直接复用
     // savedCropRectEach: 每次模式(each)缓存上一次坐标，作为裁剪 UI 的初始位置
@@ -219,10 +218,6 @@ class FloatingWindowService : Service(), LifecycleOwner, ViewModelStoreOwner,
                 if (typesList != null) {
                     questionTypes = typesList.toMutableSet()
                 }
-            }
-
-            if (it.hasExtra("questionScope")) {
-                questionScope = it.getStringExtra("questionScope") ?: ""
             }
 
             if (it.hasExtra("cropMode")) {
@@ -595,12 +590,11 @@ class FloatingWindowService : Service(), LifecycleOwner, ViewModelStoreOwner,
 
                 // 从配置读取答题设置
                 val questionTypes = AppConfig.getQuestionTypes()
-                val questionScope = AppConfig.getQuestionScope()
                 val autoCopy = AppConfig.getAutoCopy()
 
                 // ========== 多题模式：VLM分离题目 + 单独搜索 ==========
                 if (visionResult != null && visionResult.questions.size > 1) {
-                    fetchAnswerMultiQuestion(visionResult, questionTypes, questionScope, autoCopy)
+                    fetchAnswerMultiQuestion(visionResult, questionTypes, autoCopy)
                     return@launch
                 }
 
@@ -661,7 +655,7 @@ class FloatingWindowService : Service(), LifecycleOwner, ViewModelStoreOwner,
                 statusMessage.value = getString(R.string.status_getting_answer)
 
                 val apiClient = OpenAIClient.getInstance()
-                val result = apiClient.analyzeQuestion(text, questionTypes, questionScope, searchContext)
+                val result = apiClient.analyzeQuestion(text, questionTypes, searchContext)
 
                 result.onSuccess { aiAnswers ->
                     handleAnswerSuccess(aiAnswers, autoCopy)
@@ -682,7 +676,6 @@ class FloatingWindowService : Service(), LifecycleOwner, ViewModelStoreOwner,
     private suspend fun fetchAnswerMultiQuestion(
         visionResult: com.hwb.aianswerer.api.vision.VisionFilterResult,
         questionTypes: Set<String>,
-        questionScope: String,
         autoCopy: Boolean
     ) {
         val questions = visionResult.questions
@@ -718,7 +711,7 @@ class FloatingWindowService : Service(), LifecycleOwner, ViewModelStoreOwner,
             statusMessage.value = getString(R.string.status_getting_answer) + " (${idx + 1}/$totalQuestions)"
 
             val apiClient = OpenAIClient.getInstance()
-            val result = apiClient.analyzeQuestion(question.text, questionTypes, questionScope, searchContext)
+            val result = apiClient.analyzeQuestion(question.text, questionTypes, searchContext)
 
             result.onSuccess { answers ->
                 allAnswers.addAll(answers)

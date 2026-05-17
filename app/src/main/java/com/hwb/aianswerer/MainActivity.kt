@@ -14,12 +14,16 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -27,11 +31,18 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.ClickableText
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -42,7 +53,6 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -55,6 +65,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -65,6 +78,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.hwb.aianswerer.config.AppConfig
 import com.hwb.aianswerer.ui.components.TopBarWithMenu
 import com.hwb.aianswerer.ui.dialogs.LanguageSelectionDialog
@@ -93,7 +107,6 @@ class MainActivity : BaseActivity() {
     private var screenCaptureData: Intent? = null
     private lateinit var defaultQuestionType: String
     private var selectedQuestionTypes by mutableStateOf<Set<String>>(emptySet())
-    private var questionScope by mutableStateOf("")
     private var cropMode by mutableStateOf(AppConfig.CROP_MODE_FULL)
 
     // Dialog状态管理
@@ -155,7 +168,6 @@ class MainActivity : BaseActivity() {
 
         // 加载答题设置
         selectedQuestionTypes = AppConfig.getQuestionTypes()
-        questionScope = AppConfig.getQuestionScope()
         cropMode = AppConfig.getCropMode()
 
         // 检查并添加Dialog到队列
@@ -166,7 +178,6 @@ class MainActivity : BaseActivity() {
                 MainScreen(
                     isAnswerModeActive = isAnswerModeActive,
                     selectedQuestionTypes = selectedQuestionTypes,
-                    questionScope = questionScope,
                     cropMode = cropMode,
                     showLanguageDialog = showLanguageDialog,
                     showModelSetupDialog = showModelSetupDialog,
@@ -180,10 +191,6 @@ class MainActivity : BaseActivity() {
                     onQuestionTypesChanged = { types ->
                         selectedQuestionTypes = types
                         AppConfig.saveQuestionTypes(types)
-                    },
-                    onQuestionScopeChanged = { scope ->
-                        questionScope = scope
-                        AppConfig.saveQuestionScope(scope)
                     },
                     onCropModeChanged = { mode ->
                         cropMode = mode
@@ -276,7 +283,6 @@ class MainActivity : BaseActivity() {
             }
             // 传递答题设置
             putStringArrayListExtra("questionTypes", ArrayList(selectedQuestionTypes))
-            putExtra("questionScope", questionScope)
             putExtra("cropMode", cropMode)
         }
 
@@ -402,13 +408,11 @@ enum class MenuItem {
 fun MainScreen(
     isAnswerModeActive: Boolean = false,
     selectedQuestionTypes: Set<String> = setOf("单选题"),
-    questionScope: String = "",
     cropMode: String = AppConfig.CROP_MODE_FULL,
     showLanguageDialog: Boolean = false,
     showModelSetupDialog: Boolean = false,
     onToggleAnswerMode: () -> Unit = {},
     onQuestionTypesChanged: (Set<String>) -> Unit = {},
-    onQuestionScopeChanged: (String) -> Unit = {},
     onCropModeChanged: (String) -> Unit = {},
     onLanguageDialogDismiss: () -> Unit = {},
     onLanguageConfirmed: () -> Unit = {},
@@ -437,112 +441,183 @@ fun MainScreen(
             )
         }
     ) { paddingValues ->
-        Surface(
+        val isDark = isSystemInDarkTheme()
+
+        Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues),
-            color = MaterialTheme.colorScheme.background
+                .padding(paddingValues)
+                .background(
+                    brush = Brush.verticalGradient(
+                        colors = listOf(
+                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = if (isDark) 0.1f else 0.15f),
+                            MaterialTheme.colorScheme.background,
+                            MaterialTheme.colorScheme.background
+                        ),
+                        startY = 0f,
+                        endY = 600f
+                    )
+                )
         ) {
-            // 性能优化：提前获取Context，避免滚动时频繁重组
             val context = LocalContext.current
 
-            // 使用Box布局实现固定底部按钮
             Box(
                 modifier = Modifier.fillMaxSize()
             ) {
-                // 可滚动内容区域
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
                         .verticalScroll(rememberScrollState())
                         .padding(horizontal = 24.dp)
-                        .padding(bottom = 96.dp), // 底部padding为按钮高度(56dp) + 按钮padding(16dp*2) + 额外间距(8dp)
+                        .padding(bottom = 96.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Top
                 ) {
-                    // 添加顶部间距，使内容更美观
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // 状态提示
+                    // 状态提示 - 图标化卡片
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(vertical = 16.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = if (isAnswerModeActive) {
-                                MaterialTheme.colorScheme.primaryContainer
-                            } else {
-                                MaterialTheme.colorScheme.surfaceVariant
-                            }
-                        )
+                        shape = RoundedCornerShape(24.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color.Transparent),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                     ) {
-                        Column(
+                        Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(16.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
+                                .background(
+                                    brush = Brush.horizontalGradient(
+                                        colors = if (isAnswerModeActive)
+                                            listOf(
+                                                MaterialTheme.colorScheme.primaryContainer,
+                                                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
+                                            )
+                                        else
+                                            listOf(
+                                                MaterialTheme.colorScheme.surfaceVariant,
+                                                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+                                            )
+                                    ),
+                                    shape = RoundedCornerShape(24.dp)
+                                )
+                                .padding(24.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(16.dp)
                         ) {
-                            Text(
-                                text = stringResource(R.string.status_label),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = if (isAnswerModeActive)
-                                    stringResource(R.string.status_running)
-                                else stringResource(R.string.status_stopped),
-                                style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.Bold,
-                                color = if (isAnswerModeActive) {
-                                    MaterialTheme.colorScheme.onPrimaryContainer
-                                } else {
-                                    MaterialTheme.colorScheme.onSurfaceVariant
-                                }
-                            )
+                            Box(
+                                modifier = Modifier
+                                    .size(56.dp)
+                                    .background(
+                                        color = if (isAnswerModeActive)
+                                            MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
+                                        else
+                                            MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f),
+                                        shape = CircleShape
+                                    ),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = if (isAnswerModeActive) Icons.Default.CheckCircle else Icons.Default.Info,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(28.dp),
+                                    tint = if (isAnswerModeActive)
+                                        MaterialTheme.colorScheme.primary
+                                    else
+                                        MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = if (isAnswerModeActive)
+                                        stringResource(R.string.status_running)
+                                    else stringResource(R.string.status_stopped),
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                                Text(
+                                    text = if (isAnswerModeActive)
+                                        stringResource(R.string.status_running_desc)
+                                    else stringResource(R.string.status_stopped_desc),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
                         }
                     }
 
-                    // 功能说明
                     UsageGuideCard(context = context)
 
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    // 本次答题设置卡片
                     SessionSettingsCard(
                         selectedQuestionTypes = selectedQuestionTypes,
-                        questionScope = questionScope,
                         cropMode = cropMode,
                         onQuestionTypesChanged = onQuestionTypesChanged,
-                        onQuestionScopeChanged = onQuestionScopeChanged,
                         onCropModeChanged = onCropModeChanged,
                         enabled = !isAnswerModeActive
                     )
                 }
 
-                // 固定在底部的切换按钮
+                // 渐变发光按钮
                 Button(
                     onClick = onToggleAnswerMode,
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
                         .fillMaxWidth()
-                        .padding(horizontal = 24.dp, vertical = 16.dp)
-                        .height(56.dp),
+                        .padding(horizontal = 20.dp, vertical = 12.dp)
+                        .height(56.dp)
+                        .shadow(
+                            elevation = if (isAnswerModeActive) 0.dp else 16.dp,
+                            shape = RoundedCornerShape(18.dp),
+                            ambientColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.4f),
+                            spotColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
+                        ),
+                    shape = RoundedCornerShape(18.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = if (isAnswerModeActive) {
-                            MaterialTheme.colorScheme.error
-                        } else {
-                            MaterialTheme.colorScheme.primary
-                        }
-                    )
+                        containerColor = Color.Transparent
+                    ),
+                    contentPadding = PaddingValues(0.dp)
                 ) {
-                    Text(
-                        text = if (isAnswerModeActive)
-                            stringResource(R.string.button_stop_mode)
-                        else stringResource(R.string.button_start_mode),
-                        style = MaterialTheme.typography.labelLarge,
-                        fontWeight = FontWeight.Bold
-                    )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(
+                                brush = Brush.horizontalGradient(
+                                    colors = if (isAnswerModeActive)
+                                        listOf(
+                                            MaterialTheme.colorScheme.error,
+                                            MaterialTheme.colorScheme.error.copy(alpha = 0.7f)
+                                        )
+                                    else
+                                        listOf(
+                                            MaterialTheme.colorScheme.primary,
+                                            MaterialTheme.colorScheme.secondary
+                                        )
+                                ),
+                                shape = RoundedCornerShape(18.dp)
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = if (isAnswerModeActive) Icons.Default.Close else Icons.Default.PlayArrow,
+                                contentDescription = null,
+                                tint = Color.White,
+                                modifier = Modifier.size(22.dp)
+                            )
+                            Spacer(Modifier.width(10.dp))
+                            Text(
+                                text = if (isAnswerModeActive)
+                                    stringResource(R.string.button_stop_mode)
+                                else stringResource(R.string.button_start_mode),
+                                color = Color.White,
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 16.sp
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -579,20 +654,65 @@ fun UsageGuideCard(context: Context) {
         label = "expand_icon_rotation"
     )
 
+    val isDark = isSystemInDarkTheme()
+    val cornerRadius = 20.dp
+
     Card(
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(cornerRadius),
+        colors = CardDefaults.cardColors(containerColor = Color.Transparent),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
+                .background(
+                    brush = if (isDark) {
+                        Brush.verticalGradient(
+                            colors = listOf(
+                                MaterialTheme.colorScheme.surface.copy(alpha = 0.45f),
+                                MaterialTheme.colorScheme.surface.copy(alpha = 0.25f)
+                            )
+                        )
+                    } else {
+                        Brush.verticalGradient(
+                            colors = listOf(
+                                MaterialTheme.colorScheme.surface.copy(alpha = 0.7f),
+                                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+                            )
+                        )
+                    },
+                    shape = RoundedCornerShape(cornerRadius)
+                )
+                .border(
+                    width = if (isDark) 1.dp else 0.5.dp,
+                    brush = if (isDark) {
+                        Brush.verticalGradient(
+                            colors = listOf(
+                                MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+                                MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f)
+                            )
+                        )
+                    } else {
+                        Brush.verticalGradient(
+                            colors = listOf(
+                                MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f),
+                                MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.1f)
+                            )
+                        )
+                    },
+                    shape = RoundedCornerShape(cornerRadius)
+                )
         ) {
-            // 标题行，包含展开/收起按钮
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { isExpanded = !isExpanded }
-                    .padding(bottom = 12.dp),
+            Column(
+                modifier = Modifier.padding(20.dp)
+            ) {
+                // 标题行，包含展开/收起按钮
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { isExpanded = !isExpanded }
+                        .padding(bottom = 16.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -646,6 +766,7 @@ fun UsageGuideCard(context: Context) {
                     )
                 }
             }
+        }
         }
     }
 }
@@ -743,10 +864,8 @@ fun FeatureItem(
 @Composable
 fun SessionSettingsCard(
     selectedQuestionTypes: Set<String>,
-    questionScope: String,
     cropMode: String,
     onQuestionTypesChanged: (Set<String>) -> Unit,
-    onQuestionScopeChanged: (String) -> Unit,
     onCropModeChanged: (String) -> Unit,
     enabled: Boolean = true
 ) {
@@ -759,48 +878,92 @@ fun SessionSettingsCard(
         stringResource(R.string.question_type_essay)
     )
 
+    val isDark = isSystemInDarkTheme()
+    val cornerRadius = 20.dp
+
     Card(
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(cornerRadius),
+        colors = CardDefaults.cardColors(containerColor = Color.Transparent),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
+                .background(
+                    brush = if (isDark) {
+                        Brush.verticalGradient(
+                            colors = listOf(
+                                MaterialTheme.colorScheme.surface.copy(alpha = 0.45f),
+                                MaterialTheme.colorScheme.surface.copy(alpha = 0.25f)
+                            )
+                        )
+                    } else {
+                        Brush.verticalGradient(
+                            colors = listOf(
+                                MaterialTheme.colorScheme.surface.copy(alpha = 0.7f),
+                                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+                            )
+                        )
+                    },
+                    shape = RoundedCornerShape(cornerRadius)
+                )
+                .border(
+                    width = if (isDark) 1.dp else 0.5.dp,
+                    brush = if (isDark) {
+                        Brush.verticalGradient(
+                            colors = listOf(
+                                MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+                                MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f)
+                            )
+                        )
+                    } else {
+                        Brush.verticalGradient(
+                            colors = listOf(
+                                MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f),
+                                MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.1f)
+                            )
+                        )
+                    },
+                    shape = RoundedCornerShape(cornerRadius)
+                )
         ) {
-            Text(
-                text = stringResource(R.string.session_settings_title),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(bottom = 4.dp)
-            )
-            Text(
-                text = stringResource(R.string.session_settings_desc),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
-
-            // 题型选择标签
-            Text(
-                text = stringResource(R.string.question_type_label),
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.Medium,
-                modifier = Modifier.padding(bottom = 6.dp)
-            )
-
-            // 题型多选Chips
-            FlowRow(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                verticalArrangement = Arrangement.spacedBy((-6).dp)
+            Column(
+                modifier = Modifier.padding(20.dp)
             ) {
+                Text(
+                    text = stringResource(R.string.session_settings_title),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.padding(bottom = 4.dp)
+                )
+                Text(
+                    text = stringResource(R.string.session_settings_desc),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+
+                // 题型选择标签
+                Text(
+                    text = stringResource(R.string.question_type_label),
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier.padding(bottom = 6.dp)
+                )
+
+                // 题型多选Chips
+                FlowRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
                 allQuestionTypes.forEach { type ->
                     val isSelected = selectedQuestionTypes.contains(type)
                     FilterChip(
                         selected = isSelected,
                         onClick = {
                             val newTypes = if (isSelected) {
-                                // 至少保留一个题型
                                 if (selectedQuestionTypes.size > 1) {
                                     selectedQuestionTypes - type
                                 } else {
@@ -814,123 +977,113 @@ fun SessionSettingsCard(
                         label = {
                             Text(
                                 text = type,
-                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                                fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal
                             )
                         },
                         enabled = enabled,
+                        shape = RoundedCornerShape(50),
                         colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = MaterialTheme.colorScheme.primary,
-                            selectedLabelColor = MaterialTheme.colorScheme.onPrimary
+                            selectedContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
+                            selectedLabelColor = MaterialTheme.colorScheme.primary,
+                            containerColor = MaterialTheme.colorScheme.surface,
+                            labelColor = MaterialTheme.colorScheme.onSurfaceVariant
                         ),
                         border = FilterChipDefaults.filterChipBorder(
                             enabled = enabled,
                             selected = isSelected,
                             borderColor = if (isSelected)
-                                MaterialTheme.colorScheme.primary
+                                MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
                             else
-                                MaterialTheme.colorScheme.outline,
-                            selectedBorderColor = MaterialTheme.colorScheme.primary,
-                            borderWidth = if (isSelected) 2.dp else 1.dp,
-                            selectedBorderWidth = 2.dp
+                                MaterialTheme.colorScheme.outlineVariant,
+                            selectedBorderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
+                            borderWidth = 1.dp,
+                            selectedBorderWidth = 1.dp
                         )
                     )
                 }
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // 截图识别模式选择
+                Text(
+                    text = stringResource(R.string.crop_mode_label),
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier.padding(bottom = 6.dp)
+                )
+
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy((-8).dp)
+                ) {
+                    // 全屏识别
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable(enabled = enabled) {
+                                onCropModeChanged(AppConfig.CROP_MODE_FULL)
+                            }
+                            .padding(vertical = 0.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        RadioButton(
+                            selected = cropMode == AppConfig.CROP_MODE_FULL,
+                            onClick = { onCropModeChanged(AppConfig.CROP_MODE_FULL) },
+                            enabled = enabled
+                        )
+                        Text(
+                            text = stringResource(R.string.crop_mode_full),
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.padding(start = 8.dp)
+                        )
+                    }
+
+                    // 部分识别（每次）
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable(enabled = enabled) {
+                                onCropModeChanged(AppConfig.CROP_MODE_EACH)
+                            }
+                            .padding(vertical = 0.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        RadioButton(
+                            selected = cropMode == AppConfig.CROP_MODE_EACH,
+                            onClick = { onCropModeChanged(AppConfig.CROP_MODE_EACH) },
+                            enabled = enabled
+                        )
+                        Text(
+                            text = stringResource(R.string.crop_mode_each),
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.padding(start = 8.dp)
+                        )
+                    }
+
+                    // 部分识别（单次）
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable(enabled = enabled) {
+                                onCropModeChanged(AppConfig.CROP_MODE_ONCE)
+                            }
+                            .padding(vertical = 0.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        RadioButton(
+                            selected = cropMode == AppConfig.CROP_MODE_ONCE,
+                            onClick = { onCropModeChanged(AppConfig.CROP_MODE_ONCE) },
+                            enabled = enabled
+                        )
+                        Text(
+                            text = stringResource(R.string.crop_mode_once),
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.padding(start = 8.dp)
+                        )
+                    }
+                }
             }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // 截图识别模式选择
-            Text(
-                text = stringResource(R.string.crop_mode_label),
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.Medium,
-                modifier = Modifier.padding(bottom = 6.dp)
-            )
-
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy((-8).dp)
-            ) {
-                // 全屏识别
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable(enabled = enabled) {
-                            onCropModeChanged(AppConfig.CROP_MODE_FULL)
-                        }
-                        .padding(vertical = 0.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    RadioButton(
-                        selected = cropMode == AppConfig.CROP_MODE_FULL,
-                        onClick = { onCropModeChanged(AppConfig.CROP_MODE_FULL) },
-                        enabled = enabled
-                    )
-                    Text(
-                        text = stringResource(R.string.crop_mode_full),
-                        style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.padding(start = 8.dp)
-                    )
-                }
-
-                // 部分识别（每次）
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable(enabled = enabled) {
-                            onCropModeChanged(AppConfig.CROP_MODE_EACH)
-                        }
-                        .padding(vertical = 0.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    RadioButton(
-                        selected = cropMode == AppConfig.CROP_MODE_EACH,
-                        onClick = { onCropModeChanged(AppConfig.CROP_MODE_EACH) },
-                        enabled = enabled
-                    )
-                    Text(
-                        text = stringResource(R.string.crop_mode_each),
-                        style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.padding(start = 8.dp)
-                    )
-                }
-
-                // 部分识别（单次）
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable(enabled = enabled) {
-                            onCropModeChanged(AppConfig.CROP_MODE_ONCE)
-                        }
-                        .padding(vertical = 0.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    RadioButton(
-                        selected = cropMode == AppConfig.CROP_MODE_ONCE,
-                        onClick = { onCropModeChanged(AppConfig.CROP_MODE_ONCE) },
-                        enabled = enabled
-                    )
-                    Text(
-                        text = stringResource(R.string.crop_mode_once),
-                        style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.padding(start = 8.dp)
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // 题目内容范围输入
-            OutlinedTextField(
-                value = questionScope,
-                onValueChange = onQuestionScopeChanged,
-                label = { Text(stringResource(R.string.question_scope_label)) },
-                placeholder = { Text(stringResource(R.string.question_scope_hint)) },
-                modifier = Modifier.fillMaxWidth(),
-                minLines = 2,
-                maxLines = 4,
-                enabled = enabled
-            )
         }
     }
 }

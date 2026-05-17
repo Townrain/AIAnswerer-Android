@@ -1,5 +1,7 @@
 package com.hwb.aianswerer.ui.components
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -28,6 +30,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChange
@@ -134,35 +137,46 @@ fun FloatingWindowContent(
             if (statusMessage != null) {
                 Card(
                     modifier = Modifier
-                        .width(200.dp)
-                        .alpha(cardAlpha),
-                    shape = RoundedCornerShape(8.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.secondaryContainer
-                    ),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                        .width(200.dp),
+                    shape = RoundedCornerShape(14.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.Transparent),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                 ) {
-                    Row(
+                    Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(12.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = statusMessage,
-                            fontSize = 13.sp,
-                            modifier = Modifier.weight(1f)
-                        )
-                        IconButton(
-                            onClick = onCloseStatus,
-                            modifier = Modifier.size(20.dp)
-                        ) {
-                            Icon(
-                                imageVector = LocalIcons.Close,
-                                contentDescription = MyApplication.getString(R.string.cd_close_button),
-                                modifier = Modifier.size(16.dp)
+                            .background(
+                                color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = cardAlpha),
+                                shape = RoundedCornerShape(14.dp)
                             )
+                            .border(
+                                width = 1.dp,
+                                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f * cardAlpha),
+                                shape = RoundedCornerShape(14.dp)
+                            )
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(12.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = statusMessage,
+                                fontSize = 13.sp,
+                                modifier = Modifier.weight(1f)
+                            )
+                            IconButton(
+                                onClick = onCloseStatus,
+                                modifier = Modifier.size(20.dp)
+                            ) {
+                                Icon(
+                                    imageVector = LocalIcons.Close,
+                                    contentDescription = MyApplication.getString(R.string.cd_close_button),
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
                         }
                     }
                 }
@@ -174,50 +188,71 @@ fun FloatingWindowContent(
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .heightIn(max = 400.dp)
-                        .alpha(cardAlpha),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surface
-                    ),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+                        .heightIn(max = 400.dp),
+                    shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.Transparent),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                 ) {
-                    Column(
+                    Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(12.dp)
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = MyApplication.getString(R.string.floating_answer_title),
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 16.sp
+                            .background(
+                                brush = Brush.verticalGradient(
+                                    colors = listOf(
+                                        MaterialTheme.colorScheme.surface.copy(alpha = cardAlpha),
+                                        MaterialTheme.colorScheme.surface.copy(alpha = cardAlpha * 0.8f)
+                                    )
+                                ),
+                                shape = RoundedCornerShape(20.dp)
                             )
-                            IconButton(
-                                onClick = onCloseAnswer,
-                                modifier = Modifier.size(24.dp)
-                            ) {
-                                Icon(
-                                    imageVector = LocalIcons.Close,
-                                    contentDescription = MyApplication.getString(R.string.cd_close_button),
-                                    tint = MaterialTheme.colorScheme.onSurface
-                                )
-                            }
-                        }
-
-                        HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-
-                        Text(
-                            text = answerText,
-                            fontSize = 14.sp,
+                            .border(
+                                width = 1.dp,
+                                brush = Brush.verticalGradient(
+                                    colors = listOf(
+                                        MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f * cardAlpha),
+                                        MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f * cardAlpha)
+                                    )
+                                ),
+                                shape = RoundedCornerShape(20.dp)
+                            )
+                    ) {
+                        Column(
                             modifier = Modifier
-                                .verticalScroll(rememberScrollState())
-                                .weight(1f, fill = false)
-                        )
+                                .fillMaxWidth()
+                                .padding(16.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = MyApplication.getString(R.string.floating_answer_title),
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 16.sp
+                                )
+                                IconButton(
+                                    onClick = onCloseAnswer,
+                                    modifier = Modifier.size(24.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = LocalIcons.Close,
+                                        contentDescription = MyApplication.getString(R.string.cd_close_button),
+                                        tint = MaterialTheme.colorScheme.onSurface
+                                    )
+                                }
+                            }
+
+                            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
+                            Text(
+                                text = answerText,
+                                fontSize = 14.sp,
+                                modifier = Modifier
+                                    .verticalScroll(rememberScrollState())
+                                    .weight(1f, fill = false)
+                            )
+                        }
                     }
                 }
             }

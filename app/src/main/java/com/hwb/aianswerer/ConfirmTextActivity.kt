@@ -101,13 +101,8 @@ fun ConfirmTextScreen(
 
     // 获取当前设置信息
     val questionTypes = AppConfig.getQuestionTypes()
-    val questionScope = AppConfig.getQuestionScope()
     val settingsText = buildString {
         append(questionTypes.joinToString("、"))
-        if (questionScope.isNotBlank()) {
-            append(" | ")
-            append(questionScope)
-        }
     }
 
     Box(

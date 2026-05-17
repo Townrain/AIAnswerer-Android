@@ -18,12 +18,12 @@ object Constants {
 
     /**
      * 动态构建系统提示词：
-     *   基础 prompt + 可选约束段（题型限制、知识范围限制）。
-     *   约束段仅当用户设定了题型或范围时追加，避免给 AI 无关指令。
+     *   基础 prompt + 可选约束段（题型限制）。
+     *   约束段仅当用户设定了题型时追加，避免给 AI 无关指令。
      */
-    fun buildSystemPrompt(questionTypes: Set<String>, questionScope: String, searchContext: String = ""): String {
+    fun buildSystemPrompt(questionTypes: Set<String>, searchContext: String = ""): String {
         val basePrompt = getBaseSystemPrompt()
-        if (questionTypes.isEmpty() && questionScope.isBlank() && searchContext.isBlank()) {
+        if (questionTypes.isEmpty() && searchContext.isBlank()) {
             return basePrompt
         }
 
@@ -34,7 +34,6 @@ object Constants {
 
         val typeSeparator = MyApplication.getString(R.string.system_prompt_type_separator)
         val essayType = MyApplication.getString(R.string.ai_question_type_essay)
-        var hasConstraint = false
 
         // 添加题型限制
         if (questionTypes.isNotEmpty()) {
@@ -44,17 +43,6 @@ object Constants {
                     questionTypes.joinToString(typeSeparator),
                     essayType
                 )
-            )
-            hasConstraint = true
-        }
-
-        // 添加题目内容范围限制
-        if (questionScope.isNotBlank()) {
-            if (hasConstraint) {
-                promptBuilder.append('\n')
-            }
-            promptBuilder.append(
-                MyApplication.getString(R.string.system_prompt_scope_template, questionScope)
             )
         }
 
